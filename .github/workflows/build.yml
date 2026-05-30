@@ -1,22 +1,33 @@
 name: build
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Commit, branch or tag to build'
+        required: true
+        type: string
 
 permissions:
   contents: read
 
 jobs:
-  build:
+  windows:
     strategy:
+      fail-fast: false
       matrix:
         env:
-          - { CC: "gcc", CXX: "g++" }
-          - { CC: "clang", CXX: "clang++" }
+          - { TARGET_HOST: "x86_64-w64-mingw32", WINE: "wine64" }
     env: ${{ matrix.env }}
     runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 #v7.0.1
       with:
+        ref: ${{ github.event.inputs.ref }}
         persist-credentials: false
 
     - name: Checkout sample streams
@@ -37,3 +48,58 @@ jobs:
     - name: Run tests
       run: |
         ./scripts/ci-run.sh
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: windows-intel-64
+        path: |
+          build/dec265/dec265.exe
+          build/libde265/libde265.dll
+          build/libde265/libde265.dll.a
+        retention-days: 30
+        if-no-files-found: warn
+
+  arm:
+    strategy:
+      fail-fast: false
+      matrix:
+        env:
+          - { TARGET_HOST: "arm-linux-gnueabihf" }
+    env: ${{ matrix.env }}
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 #v7.0.1
+      with:
+        ref: ${{ github.event.inputs.ref }}
+        persist-credentials: false
+
+    - name: Checkout sample streams
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 #v7.0.1
+      with:
+        repository: strukturag/libde265-data
+        path: libde265-data
+        persist-credentials: false
+
+    - name: Install dependencies
+      run: |
+        ./scripts/ci-before-install-linux.sh
+
+    - name: Prepare CI
+      run: |
+        ./scripts/ci-before-script.sh
+
+    - name: Run tests
+      run: |
+        ./scripts/ci-run.sh
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: arm-linux-gnueabihf
+        path: |
+          build/dec265/dec265
+          build/libde265/libde265.so
+          build/libde265/libde265.so.*
+        retention-days: 30
+        if-no-files-found: warn

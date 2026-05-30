@@ -1,6 +1,16 @@
 name: osx
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Commit, branch or tag to build'
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -8,17 +18,22 @@ permissions:
 jobs:
   build:
     strategy:
+      fail-fast: false
       matrix:
-        os: [macos-14, macos-15]
-        env:
-          - { CC: "clang", CXX: "clang++" }
-          - { CC: "gcc", CXX: "g++" }
-    env: ${{ matrix.env }}
-
-    runs-on: ${{ matrix.os }}
+        include:
+          - runs-on: macos-13
+            arch: x86_64
+          - runs-on: macos-14
+            arch: arm64
+          - runs-on: macos-15
+            arch: arm64
+    runs-on: ${{ matrix.runs-on }}
+    env:
+      ARCH: ${{ matrix.arch }}
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 #v7.0.1
       with:
+        ref: ${{ github.event.inputs.ref }}
         persist-credentials: false
 
     - name: Checkout sample streams
@@ -39,3 +54,14 @@ jobs:
     - name: Run tests
       run: |
         ./scripts/ci-run.sh
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: macos-${{ matrix.arch }}
+        path: |
+          build/dec265/dec265
+          build/libde265/libde265.dylib
+          build/libde265/libde265.dylib.*
+        retention-days: 30
+        if-no-files-found: warn
