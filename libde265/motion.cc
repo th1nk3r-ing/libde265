@@ -539,6 +539,40 @@ void generate_inter_prediction_samples(base_context* ctx,
     }
   }
 
+  // Copy the prediction signal (if saving of the prediction signal is activated)
+  if (img->get_image_plane_prediction(0) != nullptr)
+  {
+    // Just copy from the pixel values (which contain the prediction now) to the prediction buffer
+    for (int cIdx = 0; cIdx < 3; cIdx++)
+    {
+      int stride = img->get_image_stride(cIdx);
+      int xPos = (cIdx == 0) ? xP : xP/sps->SubWidthC;
+      int yPos = (cIdx == 0) ? yP : yP/sps->SubHeightC;
+      int bitDept = (cIdx == 0) ? img->BitDepth_Y : img->BitDepth_C;
+      uint8_t bpp_shift = (bitDept > 8) ? 1 : 0;
+      uint8_t* src = img->get_image_plane(cIdx) + ((xPos + yPos*stride) << bpp_shift);
+      uint8_t* dst = img->get_image_plane_prediction(cIdx) + ((xPos + yPos*stride) << bpp_shift);
+
+      bool twoByte = bitDept > 8;
+      int h = (cIdx == 0) ? nPbH : nPbH / sps->SubHeightC;
+      int w = (cIdx == 0) ? nPbW : nPbW / sps->SubWidthC;
+      for (int y = 0; y < h; y++)
+      {
+        for (int x = 0; x < w; x++)
+        {
+          if (twoByte)
+          {
+            dst[x*2] = src[x*2];
+            dst[x*2+1] = src[x*2+1];
+          }
+          else
+            dst[x] = src[x];
+        }
+        src += (stride << bpp_shift);
+        dst += (stride << bpp_shift);
+      }
+    }
+  }
 
   // --- prediction, per colour plane ---
 

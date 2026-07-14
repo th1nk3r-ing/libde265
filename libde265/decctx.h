@@ -370,6 +370,11 @@ class decoder_context : public base_context {
   //bool param_disable_mc_residual_idct;  // not implemented yet
   //bool param_disable_intra_residual_idct;  // not implemented yet
 
+  // internals parameters (used by YUView to save prediction/residual/tr_coeff signals)
+  bool param_internals_save_prediction = false;
+  bool param_internals_save_residual   = false;
+  bool param_internals_save_tr_coeff   = false;
+
   de265_security_limits param_security_limits = {
     1,                // version
     8192 * 8192,      // max_image_size_pixels

@@ -314,6 +314,22 @@ void decode_intra_prediction_internal(de265_image* img,
     }
     break;
   }
+
+  // Save the intra prediction signal before the residual is added (if enabled)
+  if (img->get_image_plane_prediction(cIdx))
+  {
+    pixel_t* resi_src = dst;
+    pixel_t* resi_dst = img->get_image_plane_prediction_at_pos_NEW<pixel_t>(cIdx,xB0,yB0);
+    for (int y=0;y<nT;y++)
+    {
+      for (int x=0;x<nT;x++)
+      {
+        resi_dst[x] = resi_src[x];
+      }
+      resi_dst += dstStride;
+      resi_src += dstStride;
+    }
+  }
 }
 
 
