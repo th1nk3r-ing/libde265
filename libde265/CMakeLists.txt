@@ -6,6 +6,7 @@ set (libde265_sources
   cabac.cc
   contextmodel.cc
   de265.cc
+  de265_internals.cc
   deblock.cc
   decctx.cc
   dpb.cc
@@ -45,6 +46,7 @@ set (libde265_headers
   de265-version.h
   contextmodel.h
   de265.h
+  de265_internals.h
   deblock.h
   decctx.h
   dpb.h
