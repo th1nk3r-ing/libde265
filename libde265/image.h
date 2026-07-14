@@ -1111,8 +1111,8 @@ private:
           return;
 
         uint8_t middleValue = (1 << (bd-1));
-        for (int y = 0; y < height; y++)
-          memset(pix + y*stride, middleValue, width);
+        for (int iy = 0; iy < height; iy++)
+          memset(pix + iy*stride, middleValue, width);
       }
       else if (bd <= 16)
       {
@@ -1129,9 +1129,9 @@ private:
 
         // There is no memset 16 function so set the middle value manually
         uint16_t middleValue = (1 << (bd-1));
-        for (int y = 0; y < height; y++)
-          for (int x = 0; x < width; x++)
-            pix[x + y * stride] = middleValue;
+        for (int iy = 0; iy < height; iy++)
+          for (int ix = 0; ix < width; ix++)
+            pix[ix + iy * stride] = middleValue;
       }
       else
         // > 16 bit not supported
