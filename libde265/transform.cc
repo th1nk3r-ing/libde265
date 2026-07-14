@@ -408,9 +408,6 @@ void scale_coefficients_internal(thread_context* tctx,
     // Copy the transform coefficients
     pixel_t *tr_coeff = tctx->img->get_image_plane_tr_coeff_at_pos_NEW<pixel_t>(cIdx, xT,yT);
     int zeroValue = (1 << (bit_depth-1));
-    int height = nT;
-    if (tctx->img->get_height() < yT + nT)
-      height = tctx->img->get_height() - yT;
 
     for (int i=0;i<tctx->nCoeff[cIdx];i++)
     {

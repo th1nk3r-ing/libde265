@@ -545,6 +545,10 @@ void generate_inter_prediction_samples(base_context* ctx,
     // Just copy from the pixel values (which contain the prediction now) to the prediction buffer
     for (int cIdx = 0; cIdx < 3; cIdx++)
     {
+      // For mono images, chroma planes (and their prediction buffers) are nullptr
+      if (img->get_image_plane(cIdx) == nullptr || img->get_image_plane_prediction(cIdx) == nullptr)
+        continue;
+
       int stride = img->get_image_stride(cIdx);
       int xPos = (cIdx == 0) ? xP : xP/sps->SubWidthC;
       int yPos = (cIdx == 0) ? yP : yP/sps->SubHeightC;

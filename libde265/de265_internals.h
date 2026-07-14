@@ -18,8 +18,8 @@
 * along with libde265.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef DE265_DEBUG_H
-#define DE265_DEBUG_H
+#ifndef DE265_INTERNALS_H
+#define DE265_INTERNALS_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -27,36 +27,6 @@ extern "C" {
 
 #include "de265-version.h"
 #include "de265.h"
-
-#if defined(_MSC_VER) && !defined(LIBDE265_STATIC_BUILD)
-#ifdef LIBDE265_EXPORTS
-#define LIBDE265_API __declspec(dllexport)
-#else
-#define LIBDE265_API __declspec(dllimport)
-#endif
-#elif HAVE_VISIBILITY
-#ifdef LIBDE265_EXPORTS
-#define LIBDE265_API __attribute__((__visibility__("default")))
-#else
-#define LIBDE265_API
-#endif
-#else
-#define LIBDE265_API
-#endif
-
-#if __GNUC__
-#define LIBDE265_DEPRECATED __attribute__((deprecated))
-#elif defined(_MSC_VER)
-#define LIBDE265_DEPRECATED __declspec(deprecated)
-#else
-#define LIBDE265_DEPRECATED
-#endif
-
-#if defined(_MSC_VER)
-#define LIBDE265_INLINE __inline
-#else
-#define LIBDE265_INLINE inline
-#endif
 
 enum de265_internals_param {
   DE265_INTERNALS_DECODER_PARAM_SAVE_PREDICTION=0,  // If set, the prediction signal will be saved alongside the reconstruction
