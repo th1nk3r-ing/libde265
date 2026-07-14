@@ -22,19 +22,54 @@
 #include "image.h"
 #include "decctx.h"
 
-// Stage 1 stub: prediction/residual/tr_coeff signal saving is not yet
-// implemented. YUView resolves these symbols with optional=true, so
-// returning NULL/no-op here disables only the prediction/residual signal
-// view, while statistics overlays (CTB/CB/PB/IntraDir/TUInfo) work.
-LIBDE265_API void de265_internals_set_parameter_bool(de265_decoder_context* /*de265ctx*/, enum de265_internals_param /*param*/, int /*value*/)
+// Stage 2: prediction/residual/tr_coeff signal saving is now implemented.
+// The decoder_context flags control buffer allocation in de265_image_get_buffer,
+// and the decode flow (intrapred/motion/transform/slice) fills the buffers.
+LIBDE265_API void de265_internals_set_parameter_bool(de265_decoder_context* de265ctx, enum de265_internals_param param, int value)
 {
-  // Stage 2: delegate to decoder_context::param_internals_save_*
+  decoder_context* ctx = (decoder_context*)de265ctx;
+
+  switch (param)
+  {
+  case DE265_INTERNALS_DECODER_PARAM_SAVE_PREDICTION:
+    ctx->param_internals_save_prediction = (value != 0);
+    break;
+  case DE265_INTERNALS_DECODER_PARAM_SAVE_RESIDUAL:
+    ctx->param_internals_save_residual = (value != 0);
+    break;
+  case DE265_INTERNALS_DECODER_PARAM_SAVE_TR_COEFF:
+    ctx->param_internals_save_tr_coeff = (value != 0);
+    break;
+  default:
+    assert(false);
+    break;
+  }
 }
 
-LIBDE265_API const uint8_t* de265_internals_get_image_plane(const struct de265_image* /*img*/, de265_internals_param /*signal*/, int /*channel*/, int* /*out_stride*/)
+LIBDE265_API const uint8_t* de265_internals_get_image_plane(const struct de265_image* img, de265_internals_param signal, int channel, int* out_stride)
 {
-  // Stage 2: return img->pixels_confwin_{prediction,residual,tr_coeff}[channel]
-  return NULL;
+  assert(channel>=0 && channel <= 2);
+
+  uint8_t* data = nullptr;
+  switch (signal)
+  {
+  case DE265_INTERNALS_DECODER_PARAM_SAVE_PREDICTION:
+    data = img->pixels_confwin_prediction[channel];
+    break;
+  case DE265_INTERNALS_DECODER_PARAM_SAVE_RESIDUAL:
+    data = img->pixels_confwin_residual[channel];
+    break;
+  case DE265_INTERNALS_DECODER_PARAM_SAVE_TR_COEFF:
+    data = img->pixels_confwin_tr_coeff[channel];
+    break;
+  default:
+    assert(false);
+    break;
+  }
+
+  if (out_stride) *out_stride = img->get_image_stride(channel) * ((de265_get_bits_per_pixel(img, channel)+7) / 8);
+
+  return data;
 }
 
 LIBDE265_API void de265_internals_get_CTB_Info_Layout(const struct de265_image *img, int *widthInUnits, int *heightInUnits, int *log2UnitSize)

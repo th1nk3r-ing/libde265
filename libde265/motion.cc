@@ -539,7 +539,6 @@ void generate_inter_prediction_samples(base_context* ctx,
     }
   }
 
-
   // --- prediction, per colour plane ---
 
   // Up to MC_MAX_BIT_DEPTH_INT16, the intermediate prediction samples fit
@@ -553,6 +552,27 @@ void generate_inter_prediction_samples(base_context* ctx,
     }
     else {
       generate_inter_prediction_samples_plane<int32_t>(ctx,shdr,img, cIdx, xP,yP, nCS,nPbW,nPbH, vi, predFlag, refPic);
+    }
+  }
+
+  if (img->get_image_plane_prediction(0) != nullptr) {
+    for (int cIdx = 0; cIdx < nPlanes; cIdx++) {
+      const int stride = img->get_image_stride(cIdx);
+      const int xPos = cIdx == 0 ? xP : xP / SubWidthC;
+      const int yPos = cIdx == 0 ? yP : yP / SubHeightC;
+      const int bytesPerSample = img->get_bytes_per_pixel(cIdx);
+      const int width = cIdx == 0 ? nPbW : nPbW / SubWidthC;
+      const int height = cIdx == 0 ? nPbH : nPbH / SubHeightC;
+      const uint8_t* src = img->get_image_plane(cIdx) +
+                           (xPos + yPos * stride) * bytesPerSample;
+      uint8_t* dst = img->get_image_plane_prediction(cIdx) +
+                     (xPos + yPos * stride) * bytesPerSample;
+
+      for (int y = 0; y < height; y++) {
+        memcpy(dst, src, width * bytesPerSample);
+        src += stride * bytesPerSample;
+        dst += stride * bytesPerSample;
+      }
     }
   }
 }
