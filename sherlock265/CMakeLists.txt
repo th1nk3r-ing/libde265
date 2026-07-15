@@ -1,6 +1,6 @@
-find_package(Qt5 COMPONENTS Core Gui Widgets QUIET)
-if(NOT Qt5_FOUND)
-  message(STATUS "Qt5 not found, skipping sherlock265")
+find_package(Qt6 COMPONENTS Core Gui Widgets QUIET)
+if(NOT Qt6_FOUND)
+  message(STATUS "Qt6 not found, skipping sherlock265")
   return()
 endif()
 
@@ -18,9 +18,9 @@ add_executable(sherlock265
 
 target_link_libraries(sherlock265 PRIVATE
   de265
-  Qt5::Core
-  Qt5::Gui
-  Qt5::Widgets
+  Qt6::Core
+  Qt6::Gui
+  Qt6::Widgets
   Threads::Threads
 )
 
