@@ -23,8 +23,6 @@ jobs:
         include:
           - runs-on: macos-13
             arch: x86_64
-          - runs-on: macos-14
-            arch: arm64
           - runs-on: macos-15
             arch: arm64
     runs-on: ${{ matrix.runs-on }}
