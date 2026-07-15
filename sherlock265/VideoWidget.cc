@@ -32,7 +32,6 @@ VideoWidget::VideoWidget(QWidget *parent)
   : QWidget(parent), mImg(NULL)
 {
   setAutoFillBackground(false);
-  setAttribute(Qt::WA_NoSystemBackground, true);
 
   QPalette palette = this->palette();
   palette.setColor(QPalette::Window, Qt::black);

@@ -278,7 +278,7 @@ void VideoDecoder::convert_frame_swscale(const de265_image* img, QImage & qimg)
   }
 
   uint8_t *qdata[1] = { (uint8_t *) qimg.bits() };
-  int qstride[1] = { qimg.bytesPerLine() };
+  int qstride[1] = { (int)qimg.bytesPerLine() };
   sws_scale(sws, data, stride, 0, img->get_height(), qdata, qstride);
 }
 #endif
