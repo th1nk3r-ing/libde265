@@ -1,0 +1,53 @@
+name: msvc
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Commit, branch or tag to build'
+        required: true
+        type: string
+
+jobs:
+  build:
+    runs-on: windows-2022
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event.inputs.ref }}
+
+    - name: Checkout sample streams
+      uses: actions/checkout@v4
+      with:
+        repository: strukturag/libde265-data
+        path: libde265-data
+
+    - name: Configure
+      run: cmake -G "Visual Studio 17 2022" -A x64 -S . -B build -DENABLE_ENCODER=OFF -DENABLE_SDL=OFF
+
+    - name: Build
+      run: cmake --build build --config Release
+
+    - name: Test
+      run: |
+        $ErrorActionPreference = 'Stop'
+        $PSNativeCommandUseErrorActionPreference = $true
+        Copy-Item build\libde265\Release\libde265.dll build\dec265\Release\
+        build\dec265\Release\dec265.exe -q -c -f 100 libde265-data\IDR-only\paris-352x288-intra.bin
+        build\dec265\Release\dec265.exe -t 4 -q -c -f 100 libde265-data\IDR-only\paris-352x288-intra.bin
+        build\dec265\Release\dec265.exe -q -c -f 100 libde265-data\RandomAccess\paris-ra-wpp.bin
+        build\dec265\Release\dec265.exe -t 4 -q -c -f 100 libde265-data\RandomAccess\paris-ra-wpp.bin
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: msvc-x64-release
+        path: |
+          build/dec265/Release/dec265.exe
+          build/libde265/Release/libde265.dll
+        retention-days: 30
+        if-no-files-found: warn
