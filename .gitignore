@@ -6,6 +6,7 @@
 # cmake
 /build
 /_build
+compile_commands.json
 
 # MSVC
 *.sln
