@@ -2052,6 +2052,7 @@ bool decoder_context::process_slice_segment_header(slice_segment_header* hdr,
         NoRaslOutputFlag)
       {
         img->PicOutputFlag = false;
+        return false;
       }
     else
       {
@@ -2080,6 +2081,10 @@ bool decoder_context::process_slice_segment_header(slice_segment_header* hdr,
     first_decoded_picture = false;
   }
   else {
+    if (isRASL(nal_unit_type) && NoRaslOutputFlag) {
+      return false;
+    }
+
     // claims to be not the first slice, but there is no active image available
 
     if (img == nullptr) {
