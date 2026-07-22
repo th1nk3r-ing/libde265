@@ -310,7 +310,7 @@ static LIBDE265_ALWAYS_INLINE void generate_inter_prediction_samples_plane(base_
                                                     const de265_image* const refPic[2])
 {
   const pic_parameter_set* pps = shdr->pps.get();
-  const seq_parameter_set* sps = pps->sps.get();
+  const seq_parameter_set* sps = img->get_shared_sps().get();
 
   const int bit_depth = sps->get_bit_depth(cIdx);
 
@@ -450,7 +450,7 @@ void generate_inter_prediction_samples(base_context* ctx,
   const int yP = yC+yB;
 
   const pic_parameter_set* pps = shdr->pps.get();
-  const seq_parameter_set* sps = pps->sps.get();
+  const seq_parameter_set* sps = img->get_shared_sps().get();
 
   if (sps->BitDepth_Y != img->get_bit_depth(0) ||
       sps->BitDepth_C != img->get_bit_depth(1)) {
@@ -512,6 +512,14 @@ void generate_inter_prediction_samples(base_context* ctx,
     const de265_image* ref = ctx->get_image(shdr->RefPicList[l][vi->refIdx[l]]);
 
     logtrace(LogMotion, "refIdx: %d -> dpb[%d]\n", vi->refIdx[l], shdr->RefPicList[l][vi->refIdx[l]]);
+
+    if (ref) {
+      auto nonconstRef = const_cast<de265_image*>(ref);
+      const auto refSps = nonconstRef->get_shared_sps().get();
+      const auto imageSps = img->get_shared_sps().get();
+      if (refSps != imageSps)
+        ref = nullptr;
+    }
 
     if (!ref || ref->PicState == UnusedForReference) {
       img->integrity = INTEGRITY_DECODING_ERRORS;
