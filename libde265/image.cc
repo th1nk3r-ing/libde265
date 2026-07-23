@@ -687,6 +687,8 @@ de265_error de265_image::copy_image(const de265_image* src)
     return err;
   }
 
+  this->dts = src->dts;
+
   copy_lines_from(src, 0, src->height);
 
   return err;

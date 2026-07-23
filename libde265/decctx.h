@@ -347,7 +347,7 @@ class decoder_context : public base_context {
   void process_nal_hdr(nal_header*);
 
   bool process_slice_segment_header(slice_segment_header*,
-                                    de265_error*, de265_PTS pts,
+                                    de265_error*, de265_PTS pts, de265_PTS dts,
                                     nal_header* nal_hdr, void* user_data);
 
   //void push_current_picture_to_output_queue();
@@ -374,6 +374,10 @@ class decoder_context : public base_context {
   bool param_internals_save_prediction = false;
   bool param_internals_save_residual   = false;
   bool param_internals_save_tr_coeff   = false;
+
+  // If set, skip slice body decoding (CABAC/motion-comp/transform/reconstruction).
+  // Only parse slice headers and construct reference picture lists.
+  bool param_header_only = false;
 
   de265_security_limits param_security_limits = {
     1,                // version

@@ -347,7 +347,7 @@ de265_error NAL_Parser::push_data(const unsigned char* data, int len,
 
 
 de265_error NAL_Parser::push_NAL(const unsigned char* data, int len,
-                                 de265_PTS pts, void* user_data)
+                                 de265_PTS pts, de265_PTS dts, void* user_data)
 {
 
   // Cannot use byte-stream input and NAL input at the same time.
@@ -374,6 +374,7 @@ de265_error NAL_Parser::push_NAL(const unsigned char* data, int len,
     return DE265_ERROR_OUT_OF_MEMORY;
   }
   nal->pts = pts;
+  nal->dts = dts;
   nal->user_data = user_data;
 
   nal->remove_stuffing_bytes();

@@ -460,6 +460,7 @@ public:
   // --- meta information ---
 
   de265_PTS pts = 0;
+  de265_PTS dts = 0;
   void*     user_data = nullptr;
   void*     plane_user_data[3] = { nullptr, nullptr, nullptr };
   de265_image_allocation image_allocation_functions; // the functions used for memory allocation

@@ -528,7 +528,7 @@ de265_error decoder_context::read_slice_NAL(bitreader& reader, std::unique_ptr<N
   }
 
 
-  if (process_slice_segment_header(shdr, &err, nal->pts, &nal_hdr, nal->user_data) == false)
+  if (process_slice_segment_header(shdr, &err, nal->pts, nal->dts, &nal_hdr, nal->user_data) == false)
     {
       if (img!=nullptr) img->integrity = INTEGRITY_NOT_DECODED;
       nal_parser.free_NAL_unit(std::move(nal));
@@ -644,10 +644,16 @@ de265_error decoder_context::decode_some(bool* did_work)
 
       *did_work = true;
 
-      //err = decode_slice_unit_sequential(imgunit, sliceunit);
-      err = decode_slice_unit_parallel(imgunit, sliceunit);
-      if (err) {
-        return err;
+      if (param_header_only) {
+        // Header-only mode: skip CABAC/motion-comp/transform/reconstruction.
+        // Just mark this slice unit as decoded.
+        sliceunit->state = slice_unit::Decoded;
+      } else {
+        //err = decode_slice_unit_sequential(imgunit, sliceunit);
+        err = decode_slice_unit_parallel(imgunit, sliceunit);
+        if (err) {
+          return err;
+        }
       }
 
       //delete sliceunit;
@@ -662,7 +668,10 @@ de265_error decoder_context::decode_some(bool* did_work)
   if ( ( image_units.size()>=2 && image_units[0]->all_slice_segments_processed()) ||
        ( image_units.size()>=1 && image_units[0]->all_slice_segments_processed() &&
          nal_parser.number_of_NAL_units_pending()==0 &&
-         (nal_parser.is_end_of_stream() || nal_parser.is_end_of_frame()) )) {
+         (nal_parser.is_end_of_stream() || nal_parser.is_end_of_frame()) ) ||
+       ( param_header_only && image_units.size()>=1 &&
+         image_units[0]->all_slice_segments_processed() &&
+         nal_parser.number_of_NAL_units_pending()==0 ) ) {
 
     image_unit* imgunit = image_units[0];
 
@@ -681,10 +690,13 @@ de265_error decoder_context::decode_some(bool* did_work)
 
     // run post-processing filters (deblocking & SAO)
 
-    if (img->decctx->num_worker_threads)
-      run_postprocessing_filters_parallel(imgunit);
-    else
-      run_postprocessing_filters_sequential(imgunit->img);
+    if (!param_header_only)
+    {
+      if (img->decctx->num_worker_threads)
+        run_postprocessing_filters_parallel(imgunit);
+      else
+        run_postprocessing_filters_sequential(imgunit->img);
+    }
 
     // process suffix SEIs
 
@@ -1382,7 +1394,7 @@ int decoder_context::generate_unavailable_reference_picture(const seq_parameter_
 
   std::shared_ptr<const seq_parameter_set> current_sps = this->sps[ (int)current_pps->seq_parameter_set_id ];
 
-  int idx = dpb.new_image(current_sps, this, 0,0, false);
+  int idx = dpb.new_image(current_sps, this, 0, 0, nullptr, false);
   if (idx<0) {
     return idx;
   }
@@ -1695,7 +1707,12 @@ de265_error decoder_context::process_reference_picture_set(slice_segment_header*
 
   hdr->RemoveReferencesList = removeReferencesList;
 
-  //remove_images_from_dpb(hdr->RemoveReferencesList);
+  // In header-only mode we never enter decode_slice_unit_*, so the DPB cleanup
+  // that normally happens there (lines 680 / 759) is never called.  Do it here
+  // instead so that reference-frame slots are freed and the DPB does not fill up.
+  if (param_header_only) {
+    remove_images_from_dpb(hdr->RemoveReferencesList);
+  }
 
   return DE265_OK;
 }
@@ -1967,7 +1984,7 @@ de265_error decoder_context::push_picture_to_output_queue(image_unit* imgunit)
 
 // returns whether we can continue decoding the stream or whether we should give up
 bool decoder_context::process_slice_segment_header(slice_segment_header* hdr,
-                                                   de265_error* err, de265_PTS pts,
+                                                   de265_error* err, de265_PTS pts, de265_PTS dts,
                                                    nal_header* nal_hdr,
                                                    void* user_data)
 {
@@ -2010,7 +2027,7 @@ bool decoder_context::process_slice_segment_header(slice_segment_header* hdr,
 
     int image_buffer_idx;
     bool isOutputImage = (!sps->sample_adaptive_offset_enabled_flag || param_disable_sao);
-    image_buffer_idx = dpb.new_image(current_sps, this, pts, user_data, isOutputImage);
+    image_buffer_idx = dpb.new_image(current_sps, this, pts, dts, user_data, isOutputImage);
     if (image_buffer_idx < 0) {
       *err = (de265_error)(-image_buffer_idx);
       return false;

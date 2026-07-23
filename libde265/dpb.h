@@ -42,7 +42,7 @@ public:
      I.e. you can check for error by return_value<0, which is error (-return_value);
      */
   int new_image(std::shared_ptr<const seq_parameter_set> sps, decoder_context* decctx,
-                de265_PTS pts, void* user_data, bool isOutputImage);
+                de265_PTS pts, de265_PTS dts, void* user_data, bool isOutputImage);
 
   /* Check for a free slot in the DPB. There are some slots reserved for
      unavailable reference frames. If high_priority==true, these reserved slots

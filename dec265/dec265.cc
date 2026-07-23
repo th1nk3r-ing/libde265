@@ -768,7 +768,7 @@ int main(int argc, char** argv)
 	else {
 	  uint8_t* buf = (uint8_t*)malloc(length);
 	  n = fread(buf,1,length,fh);
-	  err = de265_push_NAL(ctx, buf,n,  pos, (void*)1);
+	  err = de265_push_NAL(ctx, buf,n,  pos, 0, (void*)1);
 
 	  if (write_bytestream) {
 	    uint8_t sc[3] = { 0,0,1 };

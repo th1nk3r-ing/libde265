@@ -193,7 +193,7 @@ void decoded_picture_buffer::clear()
 
 int decoded_picture_buffer::new_image(std::shared_ptr<const seq_parameter_set> sps,
                                       decoder_context* decctx,
-                                      de265_PTS pts, void* user_data, bool isOutputImage)
+                                      de265_PTS pts, de265_PTS dts, void* user_data, bool isOutputImage)
 {
   loginfo(LogHeaders,"DPB::new_image\n");
   log_dpb_content();
@@ -272,6 +272,8 @@ int decoded_picture_buffer::new_image(std::shared_ptr<const seq_parameter_set> s
   if (error) {
     return -error;
   }
+
+  img->dts = dts;
 
   img->integrity = INTEGRITY_CORRECT;
 

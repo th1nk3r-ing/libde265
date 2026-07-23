@@ -47,7 +47,7 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
       break;
     }
 
-    de265_push_NAL(ctx, data + pos, nal_size, 0, nullptr);
+    de265_push_NAL(ctx, data + pos, nal_size, 0, 0, nullptr);
     pos += nal_size;
   }
 

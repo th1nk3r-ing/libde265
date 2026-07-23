@@ -40,6 +40,7 @@ class NAL_unit {
   nal_header header;
 
   de265_PTS  pts = 0;
+  de265_PTS  dts = 0;
   void*      user_data = nullptr;
 
 
@@ -95,7 +96,7 @@ class NAL_Parser
                         de265_PTS pts, void* user_data = nullptr);
 
   de265_error push_NAL(const unsigned char* data, int len,
-                       de265_PTS pts, void* user_data = nullptr);
+                       de265_PTS pts, de265_PTS dts = 0, void* user_data = nullptr);
 
   std::unique_ptr<NAL_unit> pop_from_NAL_queue();
   de265_error flush_data();

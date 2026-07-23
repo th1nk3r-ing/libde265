@@ -273,7 +273,7 @@ LIBDE265_API void        de265_push_end_of_frame(de265_decoder_context*);
    is pushed.
 */
 LIBDE265_API de265_error de265_push_NAL(de265_decoder_context*, const void* data, int length,
-                                        de265_PTS pts, void* user_data);
+                                        de265_PTS pts, de265_PTS dts, void* user_data);
 
 /* Indicate the end-of-stream. All data pending at the decoder input will be
    pushed into the decoder and the decoded picture queue will be completely emptied.

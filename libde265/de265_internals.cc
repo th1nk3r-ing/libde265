@@ -21,6 +21,7 @@
 #include "de265_internals.h"
 #include "image.h"
 #include "decctx.h"
+#include "refpic.h"
 
 // Stage 2: prediction/residual/tr_coeff signal saving is now implemented.
 // The decoder_context flags control buffer allocation in de265_image_get_buffer,
@@ -39,6 +40,9 @@ LIBDE265_API void de265_internals_set_parameter_bool(de265_decoder_context* de26
     break;
   case DE265_INTERNALS_DECODER_PARAM_SAVE_TR_COEFF:
     ctx->param_internals_save_tr_coeff = (value != 0);
+    break;
+  case DE265_INTERNALS_DECODER_PARAM_HEADER_ONLY_MODE:
+    ctx->param_header_only = (value != 0);
     break;
   default:
     assert(false);
@@ -120,4 +124,64 @@ LIBDE265_API void de265_internals_get_TUInfo_Info_layout(const struct de265_imag
 LIBDE265_API void de265_internals_get_TUInfo_info(const struct de265_image *img, uint8_t *tuInfo)
 {
   img->internals_get_TUInfo_info(tuInfo);
+}
+
+LIBDE265_API void de265_internals_get_gop_info(const struct de265_image *img,
+                                                int* out_poc,
+                                                int* out_slice_type,
+                                                int* out_nal_unit_type,
+                                                int* out_num_ref_l0,
+                                                int* out_num_ref_l1,
+                                                int  ref_poc_l0[16],
+                                                int  ref_poc_l1[16])
+{
+  if (out_poc)            *out_poc = -1;
+  if (out_slice_type)     *out_slice_type = -1;
+  if (out_nal_unit_type)  *out_nal_unit_type = -1;
+  if (out_num_ref_l0)     *out_num_ref_l0 = 0;
+  if (out_num_ref_l1)     *out_num_ref_l1 = 0;
+  for (int i = 0; i < MAX_NUM_REF_PICS; i++) {
+    if (ref_poc_l0) ref_poc_l0[i] = -1;
+    if (ref_poc_l1) ref_poc_l1[i] = -1;
+  }
+
+  if (!img || img->slices.empty())
+    return;
+
+  if (out_poc)
+    *out_poc = img->PicOrderCntVal;
+
+  const slice_segment_header* shdr = img->slices[0];
+  if (!shdr)
+    return;
+
+  if (out_slice_type)
+    *out_slice_type = shdr->slice_type;
+
+  if (out_nal_unit_type)
+    *out_nal_unit_type = img->nal_hdr.nal_unit_type;
+
+  int n0 = shdr->num_ref_idx_l0_active;
+  int n1 = shdr->num_ref_idx_l1_active;
+
+  if (out_num_ref_l0)
+    *out_num_ref_l0 = n0;
+  if (out_num_ref_l1)
+    *out_num_ref_l1 = n1;
+
+  for (int i = 0; i < n0 && i < MAX_NUM_REF_PICS; i++) {
+    if (ref_poc_l0)
+      ref_poc_l0[i] = shdr->RefPicList_POC[0][i];
+  }
+  for (int i = 0; i < n1 && i < MAX_NUM_REF_PICS; i++) {
+    if (ref_poc_l1)
+      ref_poc_l1[i] = shdr->RefPicList_POC[1][i];
+  }
+}
+
+LIBDE265_API int64_t de265_internals_get_image_dts(const struct de265_image *img)
+{
+  if (!img)
+    return -1;
+  return img->dts;
 }

@@ -366,15 +366,12 @@ LIBDE265_API de265_error de265_push_data(de265_decoder_context* de265ctx,
 
 LIBDE265_API de265_error de265_push_NAL(de265_decoder_context* de265ctx,
                                         const void* data8, int len,
-                                        de265_PTS pts, void* user_data)
+                                        de265_PTS pts, de265_PTS dts, void* user_data)
 {
   decoder_context* ctx = reinterpret_cast<decoder_context*>(de265ctx);
   const uint8_t* data = reinterpret_cast<const uint8_t*>(data8);
 
-  //printf("push NAL (size %d)\n",len);
-  //dumpdata(data8,16);
-
-  return ctx->nal_parser.push_NAL(data,len,pts,user_data);
+  return ctx->nal_parser.push_NAL(data,len,pts,dts,user_data);
 }
 
 
