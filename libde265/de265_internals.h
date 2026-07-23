@@ -31,7 +31,8 @@ extern "C" {
 enum de265_internals_param {
   DE265_INTERNALS_DECODER_PARAM_SAVE_PREDICTION=0,  // If set, the prediction signal will be saved alongside the reconstruction
   DE265_INTERNALS_DECODER_PARAM_SAVE_RESIDUAL,      // If set, the residual signal will be saved alongside the reconstruction
-  DE265_INTERNALS_DECODER_PARAM_SAVE_TR_COEFF       // If set, the transform coefficients will be saved alongside the reconstruction
+  DE265_INTERNALS_DECODER_PARAM_SAVE_TR_COEFF,       // If set, the transform coefficients will be saved alongside the reconstruction
+  DE265_INTERNALS_DECODER_PARAM_HEADER_ONLY_MODE     // If set, skip slice decoding (CABAC/motion-comp/transform), only parse headers and construct reference picture lists
 };
 
 LIBDE265_API void de265_internals_set_parameter_bool(de265_decoder_context*, enum de265_internals_param param, int value);
@@ -82,6 +83,21 @@ LIBDE265_API void de265_internals_get_TUInfo_Info_layout(const struct de265_imag
 
 /// Get TU info
 LIBDE265_API void de265_internals_get_TUInfo_info(const struct de265_image *img, uint8_t *tuInfo);
+
+/// Get GOP info for a decoded image: POC, slice type, NAL unit type, and the
+/// reference picture lists (POCs) with their active counts. The ref_poc_l0/l1
+/// arrays must have space for at least 16 entries each.
+LIBDE265_API void de265_internals_get_gop_info(const struct de265_image *img,
+                                                int* out_poc,
+                                                int* out_slice_type,
+                                                int* out_nal_unit_type,
+                                                int* out_num_ref_l0,
+                                                int* out_num_ref_l1,
+                                                int  ref_poc_l0[16],
+                                                int  ref_poc_l1[16]);
+
+/// Get the DTS (decoding timestamp) that was passed via de265_push_NAL.
+LIBDE265_API int64_t de265_internals_get_image_dts(const struct de265_image *img);
 
 #ifdef __cplusplus
 }
