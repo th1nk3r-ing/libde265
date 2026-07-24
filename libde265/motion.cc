@@ -517,8 +517,18 @@ void generate_inter_prediction_samples(base_context* ctx,
       auto nonconstRef = const_cast<de265_image*>(ref);
       const auto refSps = nonconstRef->get_shared_sps().get();
       const auto imageSps = img->get_shared_sps().get();
-      if (refSps != imageSps)
-        ref = nullptr;
+      if (refSps != imageSps) {
+        const bool contentSame =
+            refSps && imageSps &&
+            refSps->seq_parameter_set_id == imageSps->seq_parameter_set_id &&
+            refSps->chroma_format_idc == imageSps->chroma_format_idc &&
+            refSps->pic_width_in_luma_samples == imageSps->pic_width_in_luma_samples &&
+            refSps->pic_height_in_luma_samples == imageSps->pic_height_in_luma_samples &&
+            refSps->BitDepth_Y == imageSps->BitDepth_Y &&
+            refSps->BitDepth_C == imageSps->BitDepth_C;
+        if (!contentSame)
+          ref = nullptr;
+      }
     }
 
     if (!ref || ref->PicState == UnusedForReference) {
