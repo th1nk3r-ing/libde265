@@ -43,7 +43,7 @@ constexpr int DE265_MAX_VPS_SETS = 16;   // this is the maximum as defined in th
 constexpr int DE265_MAX_SPS_SETS = 16;   // this is the maximum as defined in the standard
 constexpr int DE265_MAX_PPS_SETS = 64;   // this is the maximum as defined in the standard
 
-constexpr int MAX_WARNINGS = 20;
+constexpr int MAX_WARNINGS = 500;
 
 
 class slice_segment_header;
