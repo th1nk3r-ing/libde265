@@ -162,7 +162,13 @@ LIBDE265_API void de265_internals_get_gop_info(const struct de265_image *img,
     *out_nal_unit_type = img->nal_hdr.nal_unit_type;
 
   int n0 = shdr->num_ref_idx_l0_active;
-  int n1 = shdr->num_ref_idx_l1_active;
+  // Per spec 8.3.4, RefPicList1 is only constructed for B slices. For P slices,
+  // num_ref_idx_l1_active may be non-zero (inferred from
+  // pps num_ref_idx_l1_default_active per 7.4.7.1 when override_flag==0), but
+  // RefPicList_POC[1] is never populated by construct_reference_picture_lists.
+  // Reading it would yield the zero-initialized clear() value, producing a
+  // phantom L1 reference to POC 0. Gate L1 output on slice_type to avoid this.
+  int n1 = (shdr->slice_type == SLICE_TYPE_B) ? shdr->num_ref_idx_l1_active : 0;
 
   if (out_num_ref_l0)
     *out_num_ref_l0 = n0;

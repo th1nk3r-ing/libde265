@@ -20,3 +20,8 @@ if not exist build mkdir build
 cd build
 if not exist Makefile cmake -G "NMake Makefiles" -DBUILD_SHARED_LIBS=ON -DENABLE_SDL=OFF -DENABLE_DECODER=OFF -DENABLE_ENCODER=OFF ..
 nmake
+if errorlevel 1 exit /b 1
+
+rem Create internals variant alongside the original (same build output dir)
+copy /y "libde265\libde265.dll" "libde265\libde265-internals.dll" >nul
+echo [deploy] libde265.dll + libde265-internals.dll -^> build\libde265\
