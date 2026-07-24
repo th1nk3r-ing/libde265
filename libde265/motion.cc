@@ -518,7 +518,24 @@ void generate_inter_prediction_samples(base_context* ctx,
       auto refsps = nonconst_ref->get_shared_sps().get();
       auto imgsps = img->get_shared_sps().get();
       if (refsps != imgsps) {
-        ref = nullptr;
+        // SPS shared_ptr instances differ. This commonly happens when a stream
+        // re-emits an identical VPS/SPS/PPS (allowed by spec): each SPS NAL
+        // allocates a new seq_parameter_set object in read_sps_NAL, replacing
+        // sps[id] and nulling the PPS that referenced it. Pictures decoded
+        // before/after the replacement thus hold different shared_ptr instances
+        // even though the SPS content is identical. Fall back to a content
+        // comparison so we only reject genuinely incompatible references.
+        bool contentSame =
+          refsps && imgsps &&
+          refsps->seq_parameter_set_id      == imgsps->seq_parameter_set_id &&
+          refsps->chroma_format_idc         == imgsps->chroma_format_idc &&
+          refsps->pic_width_in_luma_samples  == imgsps->pic_width_in_luma_samples &&
+          refsps->pic_height_in_luma_samples == imgsps->pic_height_in_luma_samples &&
+          refsps->BitDepth_Y                == imgsps->BitDepth_Y &&
+          refsps->BitDepth_C                == imgsps->BitDepth_C;
+        if (!contentSame) {
+          ref = nullptr;
+        }
       }
     }
 
