@@ -87,6 +87,9 @@ LIBDE265_API void de265_internals_get_TUInfo_info(const struct de265_image *img,
 /// Get GOP info for a decoded image: POC, slice type, NAL unit type, and the
 /// reference picture lists (POCs) with their active counts. The ref_poc_l0/l1
 /// arrays must have space for at least 16 entries each.
+/// out_all_slices_intra is 1 iff every slice in the image is an I-slice
+/// (slice_type == SLICE_TYPE_I), matching the "all slices intra" semantics
+/// used for keyframe detection; NULL may be passed to ignore it.
 LIBDE265_API void de265_internals_get_gop_info(const struct de265_image *img,
                                                 int* out_poc,
                                                 int* out_slice_type,
@@ -94,7 +97,8 @@ LIBDE265_API void de265_internals_get_gop_info(const struct de265_image *img,
                                                 int* out_num_ref_l0,
                                                 int* out_num_ref_l1,
                                                 int  ref_poc_l0[16],
-                                                int  ref_poc_l1[16]);
+                                                int  ref_poc_l1[16],
+                                                int* out_all_slices_intra);
 
 /// Get the DTS (decoding timestamp) that was passed via de265_push_NAL.
 LIBDE265_API int64_t de265_internals_get_image_dts(const struct de265_image *img);
