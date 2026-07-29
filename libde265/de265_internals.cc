@@ -133,13 +133,15 @@ LIBDE265_API void de265_internals_get_gop_info(const struct de265_image *img,
                                                 int* out_num_ref_l0,
                                                 int* out_num_ref_l1,
                                                 int  ref_poc_l0[16],
-                                                int  ref_poc_l1[16])
+                                                int  ref_poc_l1[16],
+                                                int* out_all_slices_intra)
 {
   if (out_poc)            *out_poc = -1;
   if (out_slice_type)     *out_slice_type = -1;
   if (out_nal_unit_type)  *out_nal_unit_type = -1;
   if (out_num_ref_l0)     *out_num_ref_l0 = 0;
   if (out_num_ref_l1)     *out_num_ref_l1 = 0;
+  if (out_all_slices_intra) *out_all_slices_intra = 0;
   for (int i = 0; i < MAX_NUM_REF_PICS; i++) {
     if (ref_poc_l0) ref_poc_l0[i] = -1;
     if (ref_poc_l1) ref_poc_l1[i] = -1;
@@ -182,6 +184,20 @@ LIBDE265_API void de265_internals_get_gop_info(const struct de265_image *img,
   for (int i = 0; i < n1 && i < MAX_NUM_REF_PICS; i++) {
     if (ref_poc_l1)
       ref_poc_l1[i] = shdr->RefPicList_POC[1][i];
+  }
+
+  if (out_all_slices_intra)
+  {
+    bool allIntra = true;
+    for (const auto* s : img->slices)
+    {
+      if (!s || s->slice_type != SLICE_TYPE_I)
+      {
+        allIntra = false;
+        break;
+      }
+    }
+    *out_all_slices_intra = allIntra ? 1 : 0;
   }
 }
 
