@@ -66,6 +66,15 @@ LIBDE265_API void de265_set_verbosity(int level)
   verbosity = level;
 }
 
+static de265_logging_callback g_log_cb = nullptr;
+static void* g_log_ctx = nullptr;
+
+LIBDE265_API void de265_set_logging_callback(de265_logging_callback cb, void* ctx)
+{
+  g_log_cb = cb;
+  g_log_ctx = ctx;
+}
+
 #if defined(DE265_LOG_ERROR) || defined(DE265_LOG_INFO) || defined(DE265_LOG_DEBUG) || defined(DE265_LOG_INFO)
 void enable_logging(enum LogModule module)
 {
@@ -88,13 +97,18 @@ void logerror(enum LogModule module, const char* string, ...)
   if (disable_log[module]) return;
 
   va_list va;
-
-  int noPrefix = (string[0]=='*');
-  if (!noPrefix) fprintf(stdout, "ERR: ");
   va_start(va, string);
-  vfprintf(stdout, string + (noPrefix ? 1 : 0), va);
+
+  if (g_log_cb)
+    g_log_cb(g_log_ctx, 1, string, va);
+  else {
+    int noPrefix = (string[0]=='*');
+    if (!noPrefix) fprintf(stdout, "ERR: ");
+    vfprintf(stdout, string + (noPrefix ? 1 : 0), va);
+    fflush(stdout);
+  }
+
   va_end(va);
-  fflush(stdout);
 }
 #endif
 
@@ -106,13 +120,18 @@ void loginfo (enum LogModule module, const char* string, ...)
   if (disable_log[module]) return;
 
   va_list va;
-
-  int noPrefix = (string[0]=='*');
-  if (!noPrefix) fprintf(stdout, "INFO: ");
   va_start(va, string);
-  vfprintf(stdout, string + (noPrefix ? 1 : 0), va);
+
+  if (g_log_cb)
+    g_log_cb(g_log_ctx, 2, string, va);
+  else {
+    int noPrefix = (string[0]=='*');
+    if (!noPrefix) fprintf(stdout, "INFO: ");
+    vfprintf(stdout, string + (noPrefix ? 1 : 0), va);
+    fflush(stdout);
+  }
+
   va_end(va);
-  fflush(stdout);
 }
 #endif
 
@@ -124,13 +143,18 @@ void logdebug(enum LogModule module, const char* string, ...)
   if (disable_log[module]) return;
 
   va_list va;
-
-  int noPrefix = (string[0]=='*');
-  if (!noPrefix) fprintf(stdout, "DEBUG: ");
   va_start(va, string);
-  vfprintf(stdout, string + (noPrefix ? 1 : 0), va);
+
+  if (g_log_cb)
+    g_log_cb(g_log_ctx, 3, string, va);
+  else {
+    int noPrefix = (string[0]=='*');
+    if (!noPrefix) fprintf(stdout, "DEBUG: ");
+    vfprintf(stdout, string + (noPrefix ? 1 : 0), va);
+    fflush(stdout);
+  }
+
   va_end(va);
-  fflush(stdout);
 }
 
 bool logdebug_enabled(enum LogModule module)
@@ -146,11 +170,6 @@ void logtrace(enum LogModule module, const char* string, ...)
   if (current_poc < log_poc_start) { return; }
   if (disable_log[module]) return;
 
-  //if (module != LogSymbols /*&& module != LogCABAC*/) { return; }
-  //if (logcnt<319500) return;
-
-  //if (module != LogCABAC) return;
-
   va_list va;
 
   if (string[0]=='$') {
@@ -161,12 +180,18 @@ void logtrace(enum LogModule module, const char* string, ...)
     string += 3;
   }
 
-  int noPrefix = (string[0]=='*');
-  if (!noPrefix) { } // fprintf(stdout, "ERR: ");
   va_start(va, string);
-  vfprintf(stdout, string + (noPrefix ? 1 : 0), va);
+
+  if (g_log_cb)
+    g_log_cb(g_log_ctx, 4, string, va);
+  else {
+    int noPrefix = (string[0]=='*');
+    if (!noPrefix) { } // fprintf(stdout, "ERR: ");
+    vfprintf(stdout, string + (noPrefix ? 1 : 0), va);
+    fflush(stdout);
+  }
+
   va_end(va);
-  fflush(stdout);
 }
 #endif
 
