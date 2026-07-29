@@ -33,6 +33,7 @@ extern "C" {
 #define __STDC_LIMIT_MACROS 1
 #endif
 #include <stdint.h>
+#include <stdarg.h>
 
 #if (defined(_WIN32) || defined(__CYGWIN__)) && !defined(LIBDE265_STATIC_BUILD)
   #ifdef LIBDE265_EXPORTS
@@ -157,6 +158,9 @@ LIBDE265_API int  de265_isOK(de265_error err);
 
 LIBDE265_API void de265_disable_logging(); // DEPRECATED
 LIBDE265_API void de265_set_verbosity(int level);
+
+typedef void (*de265_logging_callback)(void* ctx, int logLevel, const char* fmt, va_list args);
+LIBDE265_API void de265_set_logging_callback(de265_logging_callback cb, void* ctx);
 
 
 /* === image === */
