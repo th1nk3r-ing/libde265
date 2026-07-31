@@ -24,4 +24,8 @@ if errorlevel 1 exit /b 1
 
 rem Create internals variant alongside the original (same build output dir)
 copy /y "libde265\libde265.dll" "libde265\libde265-internals.dll" >nul
-echo [deploy] libde265.dll + libde265-internals.dll -^> build\libde265\
+
+rem Stage shared libraries at build\ root (unified output convention)
+copy /y "libde265\libde265.dll" "libde265.dll" >nul
+copy /y "libde265\libde265-internals.dll" "libde265-internals.dll" >nul
+echo [deploy] libde265.dll + libde265-internals.dll -^> build\
