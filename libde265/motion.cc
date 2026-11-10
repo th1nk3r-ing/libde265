@@ -576,11 +576,11 @@ void generate_inter_prediction_samples(base_context* ctx,
   if (img->get_image_plane_prediction(0) != nullptr) {
     for (int cIdx = 0; cIdx < nPlanes; cIdx++) {
       const int stride = img->get_image_stride(cIdx);
-      const int xPos = cIdx == 0 ? xP : xP / SubWidthC;
-      const int yPos = cIdx == 0 ? yP : yP / SubHeightC;
+      const int xPos = cIdx == 0 ? xP : xP / sps->SubWidthC;
+      const int yPos = cIdx == 0 ? yP : yP / sps->SubHeightC;
       const int bytesPerSample = img->get_bytes_per_pixel(cIdx);
-      const int width = cIdx == 0 ? nPbW : nPbW / SubWidthC;
-      const int height = cIdx == 0 ? nPbH : nPbH / SubHeightC;
+      const int width = cIdx == 0 ? nPbW : nPbW / sps->SubWidthC;
+      const int height = cIdx == 0 ? nPbH : nPbH / sps->SubHeightC;
       const uint8_t* src = img->get_image_plane(cIdx) +
                            (xPos + yPos * stride) * bytesPerSample;
       uint8_t* dst = img->get_image_plane_prediction(cIdx) +
