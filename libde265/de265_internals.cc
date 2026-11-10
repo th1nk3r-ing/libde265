@@ -23,9 +23,6 @@
 #include "decctx.h"
 #include "refpic.h"
 
-// Stage 2: prediction/residual/tr_coeff signal saving is now implemented.
-// The decoder_context flags control buffer allocation in de265_image_get_buffer,
-// and the decode flow (intrapred/motion/transform/slice) fills the buffers.
 LIBDE265_API void de265_internals_set_parameter_bool(de265_decoder_context* de265ctx, enum de265_internals_param param, int value)
 {
   decoder_context* ctx = (decoder_context*)de265ctx;
@@ -101,14 +98,14 @@ LIBDE265_API void de265_internals_get_PB_Info_layout(const struct de265_image *i
   img->internals_get_PB_Info_layout(widthInUnits, heightInUnits, log2UnitSize);
 }
 
-LIBDE265_API void de265_internals_get_PB_info(const struct de265_image *img, int16_t *refPOC0, int16_t *refPOC1, int16_t *x0, int16_t *y0, int16_t *x1, int16_t *y1)
+LIBDE265_API void de265_internals_get_PB_info(const struct de265_image *img, int32_t *refPOC0, int32_t *refPOC1, int16_t *x0, int16_t *y0, int16_t *x1, int16_t *y1)
 {
   img->internals_get_PB_info(refPOC0, refPOC1, x0, y0, x1, y1);
 }
 
 LIBDE265_API void de265_internals_get_IntraDir_Info_layout(const struct de265_image *img, int *widthInUnits, int *heightInUnits, int *log2UnitSize)
 {
-  img->internals_get_IntraDir_Info_Layer(widthInUnits, heightInUnits, log2UnitSize);
+  img->internals_get_IntraDir_Info_layout(widthInUnits, heightInUnits, log2UnitSize);
 }
 
 LIBDE265_API void de265_internals_get_intraDir_info(const struct de265_image *img, uint8_t *intraDir, uint8_t *intraDirChroma)
@@ -164,12 +161,8 @@ LIBDE265_API void de265_internals_get_gop_info(const struct de265_image *img,
     *out_nal_unit_type = img->nal_hdr.nal_unit_type;
 
   int n0 = shdr->num_ref_idx_l0_active;
-  // Per spec 8.3.4, RefPicList1 is only constructed for B slices. For P slices,
-  // num_ref_idx_l1_active may be non-zero (inferred from
-  // pps num_ref_idx_l1_default_active per 7.4.7.1 when override_flag==0), but
-  // RefPicList_POC[1] is never populated by construct_reference_picture_lists.
-  // Reading it would yield the zero-initialized clear() value, producing a
-  // phantom L1 reference to POC 0. Gate L1 output on slice_type to avoid this.
+  // RefPicList_POC[1] is only built for B slices; reading it for P slices would
+  // report a phantom reference to POC 0.
   int n1 = (shdr->slice_type == SLICE_TYPE_B) ? shdr->num_ref_idx_l1_active : 0;
 
   if (out_num_ref_l0)

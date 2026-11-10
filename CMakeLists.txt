@@ -5,39 +5,6 @@ project (libde265
     VERSION 1.1.3
 )
 
-# The version number.
-set (NUMERIC_VERSION 0x01000000)
-set (PACKAGE_VERSION 1.0.0)
-
-include (${CMAKE_ROOT}/Modules/CheckCCompilerFlag.cmake)
-include (${CMAKE_ROOT}/Modules/CheckIncludeFile.cmake)
-include (${CMAKE_ROOT}/Modules/CheckFunctionExists.cmake)
-include (${CMAKE_ROOT}/Modules/FindSDL.cmake)
-include (${CMAKE_ROOT}/Modules/FindThreads.cmake)
-
-CHECK_INCLUDE_FILE(malloc.h HAVE_MALLOC_H)
-CHECK_INCLUDE_FILE(stdint.h HAVE_STDINT_H)
-CHECK_INCLUDE_FILE(stdbool.h HAVE_STDBOOL_H)
-CHECK_FUNCTION_EXISTS(posix_memalign HAVE_POSIX_MEMALIGN)
-
-if (HAVE_MALLOC_H)
-  add_definitions(-DHAVE_MALLOC_H)
-endif()
-if (HAVE_STDINT_H)
-  add_definitions(-DHAVE_STDINT_H)
-endif()
-if (HAVE_STDBOOL_H)
-  add_definitions(-DHAVE_STDBOOL_H)
-endif()
-if (HAVE_POSIX_MEMALIGN)
-  add_definitions(-DHAVE_POSIX_MEMALIGN)
-endif()
-
-configure_file (
-  "${PROJECT_SOURCE_DIR}/libde265/de265-version.h.in"
-  "${PROJECT_BINARY_DIR}/libde265/de265-version.h"
-)
-
 # Auto-compute BCD-encoded numeric version from project version.
 # Each component is BCD-encoded: decimal 16 → 0x16.
 # Result: 1.0.16 → 0x01001600
@@ -67,8 +34,8 @@ set (PACKAGE_VERSION ${PROJECT_VERSION})
 # DE265_SOVERSION must always equal the MAJOR part of DE265_LIBRARY_VERSION.
 # Programs linked against libde265.so.0 will work with any libde265.so.0.x.y.
 #
-set(DE265_SOVERSION 0)
-set(DE265_LIBRARY_VERSION "0.2.3")
+set(DE265_SOVERSION 1)
+set(DE265_LIBRARY_VERSION "1.0.0")
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)

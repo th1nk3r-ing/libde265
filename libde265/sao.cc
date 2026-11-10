@@ -489,6 +489,7 @@ bool add_sao_tasks(image_unit* imgunit, int saoInputProgress)
 
   decoder_context* ctx = img->decctx;
 
+  imgunit->sao_output.set_allocate_signal_planes(false);
   de265_error err = imgunit->sao_output.alloc_image(img->get_width(), img->get_height(),
                                                     img->get_chroma_format(),
                                                     img->get_shared_sps(),

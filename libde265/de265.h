@@ -159,6 +159,8 @@ LIBDE265_API int  de265_isOK(de265_error err);
 LIBDE265_API void de265_disable_logging(); // DEPRECATED
 LIBDE265_API void de265_set_verbosity(int level);
 
+/* logLevel: 1=error, 2=info, 3=debug, 4=trace (only compiled-in levels are
+   reported). Called from the decoding thread; must be thread-safe. */
 typedef void (*de265_logging_callback)(void* ctx, int logLevel, const char* fmt, va_list args);
 LIBDE265_API void de265_set_logging_callback(de265_logging_callback cb, void* ctx);
 
@@ -275,6 +277,7 @@ LIBDE265_API void        de265_push_end_of_frame(de265_decoder_context*);
    The NAL unit must at least contain the two-byte NAL unit header. A shorter
    (or negative) length is rejected with DE265_ERROR_INVALID_ARGUMENT and nothing
    is pushed.
+   dts is optional and may be equal to pts.
 */
 LIBDE265_API de265_error de265_push_NAL(de265_decoder_context*, const void* data, int length,
                                         de265_PTS pts, de265_PTS dts, void* user_data);

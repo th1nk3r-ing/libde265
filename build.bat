@@ -18,14 +18,19 @@ if not defined VSINSTALL (
 call "%VSINSTALL%\VC\Auxiliary\Build\vcvars64.bat"
 if not exist build mkdir build
 cd build
-if not exist Makefile cmake -G "NMake Makefiles" -DBUILD_SHARED_LIBS=ON -DENABLE_SDL=OFF -DENABLE_DECODER=OFF -DENABLE_ENCODER=OFF ..
+if not exist Makefile cmake -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON -DENABLE_SDL=OFF -DENABLE_DECODER=OFF -DENABLE_ENCODER=OFF ..
 nmake
 if errorlevel 1 exit /b 1
 
 rem Create internals variant alongside the original (same build output dir)
 copy /y "libde265\libde265.dll" "libde265\libde265-internals.dll" >nul
+if errorlevel 1 exit /b 1
 
-rem Stage shared libraries at build\ root (unified output convention)
+rem Stage shared libraries and the import library at build\ root (unified output convention)
 copy /y "libde265\libde265.dll" "libde265.dll" >nul
+if errorlevel 1 exit /b 1
 copy /y "libde265\libde265-internals.dll" "libde265-internals.dll" >nul
-echo [deploy] libde265.dll + libde265-internals.dll -^> build\
+if errorlevel 1 exit /b 1
+copy /y "libde265\libde265.lib" "libde265.lib" >nul
+if errorlevel 1 exit /b 1
+echo [deploy] libde265.dll + libde265-internals.dll + libde265.lib -^> build\

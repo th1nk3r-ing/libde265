@@ -33,8 +33,8 @@ CMAKE_OPTS=""
 
 if [ "$CURRENT_OS" = "osx" ]; then
     HOMEBREW_PREFIX="$(brew --prefix)"
-    export PATH="$HOMEBREW_PREFIX/opt/qt@5/bin:$PATH"
-    export PKG_CONFIG_PATH="$HOMEBREW_PREFIX/opt/qt@5/lib/pkgconfig"
+    export PATH="$HOMEBREW_PREFIX/opt/qt/bin:$PATH"
+    export PKG_CONFIG_PATH="$HOMEBREW_PREFIX/opt/qt/lib/pkgconfig"
 fi
 
 # Valgrind on Ubuntu 22.04 cannot handle DWARF5 debug info produced by clang.

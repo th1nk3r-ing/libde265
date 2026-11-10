@@ -167,7 +167,7 @@ static int  de265_image_get_buffer(de265_decoder_context* ctx,
 
   // Allocate buffers for prediction/residual/trCoeff (only if enabled in decoder_context)
   decoder_context* decCtx = (decoder_context*)ctx;
-  for (int i = 0; i < 3; i++)
+  for (int i = 0; decCtx != nullptr && img->get_allocate_signal_planes() && i < 3; i++)
   {
     if ((i==0 && !decCtx->param_internals_save_prediction) ||
         (i==1 && !decCtx->param_internals_save_residual) ||
@@ -198,7 +198,6 @@ static int  de265_image_get_buffer(de265_decoder_context* ctx,
       return 0;
     }
 
-    // Set the buffers
     for (int j = 0; j < 3; j++)
     {
       if (i == 0)
@@ -576,6 +575,12 @@ void de265_image::release()
         {
           pixels[i] = nullptr;
           pixels_confwin[i] = nullptr;
+          pixels_prediction[i] = nullptr;
+          pixels_residual[i] = nullptr;
+          pixels_tr_coeff[i] = nullptr;
+          pixels_confwin_prediction[i] = nullptr;
+          pixels_confwin_residual[i] = nullptr;
+          pixels_confwin_tr_coeff[i] = nullptr;
         }
     }
 

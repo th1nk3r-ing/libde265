@@ -234,23 +234,24 @@ struct de265_image {
   uint32_t get_ID() const { return ID; }
 
 
-  /* */ uint8_t* get_image_plane(int cIdx)       { return pixels[cIdx]; }
+  uint8_t* get_image_plane(int cIdx)       { return pixels[cIdx]; }
   const uint8_t* get_image_plane(int cIdx) const { return pixels[cIdx]; }
 
   void set_image_plane(int cIdx, uint8_t* mem, ptrdiff_t stride, void *userdata);
 
-  // Get the image plane for the prediction and residual signal
-  /* */ uint8_t* get_image_plane_prediction(int cIdx)       { return pixels_prediction[cIdx]; }
+  uint8_t* get_image_plane_prediction(int cIdx)       { return pixels_prediction[cIdx]; }
   const uint8_t* get_image_plane_prediction(int cIdx) const { return pixels_prediction[cIdx]; }
-  /* */ uint8_t* get_image_plane_residual(int cIdx)       { return pixels_residual[cIdx]; }
+  uint8_t* get_image_plane_residual(int cIdx)       { return pixels_residual[cIdx]; }
   const uint8_t* get_image_plane_residual(int cIdx) const { return pixels_residual[cIdx]; }
-  /* */ uint8_t* get_image_plane_tr_coeff(int cIdx)       { return pixels_tr_coeff[cIdx]; }
+  uint8_t* get_image_plane_tr_coeff(int cIdx)       { return pixels_tr_coeff[cIdx]; }
   const uint8_t* get_image_plane_tr_coeff(int cIdx) const { return pixels_tr_coeff[cIdx]; }
 
-  // Set the image planes for the prediction/residual/trCoeff planes
   void set_image_plane_prediction(int cIdx, uint8_t* mem);
   void set_image_plane_residual(int cIdx, uint8_t* mem);
   void set_image_plane_tr_coeff(int cIdx, uint8_t* mem);
+
+  void set_allocate_signal_planes(bool enable) { allocate_signal_planes = enable; }
+  bool get_allocate_signal_planes() const { return allocate_signal_planes; }
 
   uint8_t* get_image_plane_at_pos(int cIdx, int xpos,int ypos)
   {
@@ -362,11 +363,12 @@ private:
   uint8_t* pixels[3] = { nullptr, nullptr, nullptr };
   uint8_t  bpp_shift[3] = {};  // 0 for 8 bit, 1 for 16 bit
 
-  // The pixel data for the prediction and residual components.
-  // These are only allocated and filled if explicitly enabled before decoding is started.
+  // Only allocated and filled when enabled in the decoder context.
   uint8_t* pixels_prediction[3] = { nullptr, nullptr, nullptr };
   uint8_t* pixels_residual[3]   = { nullptr, nullptr, nullptr };
   uint8_t* pixels_tr_coeff[3]   = { nullptr, nullptr, nullptr };
+
+  bool allocate_signal_planes = true;
 
   de265_chroma chroma_format = de265_chroma_mono;
 
@@ -900,8 +902,6 @@ public:
 
   void printBlk(int x0,int y0, int cIdx, int log2BlkSize);
 
-  // --- functions for retrieving internals ---
-
   void internals_get_CTB_Info_Layout(int *widthInUnits, int *heightInUnits, int *log2UnitSize) const
   {
     *widthInUnits = ctb_info.width_in_units;
@@ -924,20 +924,6 @@ public:
     *log2UnitSize = cb_info.log2unitSize;
   }
 
-  /* Get the coding block info. The values are stored in the following way:
-   * This function returns an array of values, sorted in a grid.
-   * You can get the layout of the grid by calling internals_get_CB_Info_Layout.
-   * The values are then arranged in a raster scan so the conversion from
-   * a unit position (x,y) to an index is: y*widthInUnits+x
-   *
-   * Each value in this array contains the following infomation:
-   * Bits 0:2 - The cb size in log2 pixels. Every CB can span multiple values in this array.
-                Only the top left most unit contains a value. All others are set to 0. (3 Bits)
-   * Bits 3:5 - The part size (3 Bits)
-   * Bits 6:7 - The prediction mode (0: INTRA, 1: INTER, 2: SKIP) (2 Bits)
-   * Bit  8   - PCM flag (1 Bit)
-   * Bit  9   - CU Transquant bypass flag (1 Bit)
-  */
   void internals_get_CB_info(uint16_t *idxArray) const
   {
     for (int i = 0; i < cb_info.size(); i++)
@@ -976,38 +962,29 @@ public:
     *log2UnitSize = pb_info.log2unitSize;
   }
 
-  // Get pb info (prediction flags, reference indices and motion vectors)
-  // if the refIdx is -1, the reference is unused
-  void internals_get_PB_info(int16_t *refPOC0, int16_t *refPOC1, int16_t *x0, int16_t *y0, int16_t *x1, int16_t *y1) const
+  void internals_get_PB_info(int32_t *refPOC0, int32_t *refPOC1, int16_t *x0, int16_t *y0, int16_t *x1, int16_t *y1) const
   {
     for (int i = 0; i < pb_info.size(); i++)
     {
       PBMotion mv = pb_info[i];
 
-      // Get X/Y
       int pbSizePix = (1 << pb_info.log2unitSize);
       int iXPix = (i % pb_info.width_in_units) * pbSizePix;
       int iYPix = (i / pb_info.width_in_units) * pbSizePix;
 
-      // Get slice header
       uint16_t shdr_idx = get_SliceHeaderIndex(iXPix, iYPix);
       int refPOC[2] = {0,0};
       if (shdr_idx < slices.size()) {
-        // Slice found
         slice_segment_header *shrd = slices[shdr_idx];
 
-        // Get reference POCs
-        // Note: PBMotion.refIdx is uint8_t in this fork (not int8_t as in
-        // ChristianFeldmann/internal), so we use predFlag to guard access
-        // instead of checking refIdx >= 0.
-        if (mv.predFlag[0] == 1 && mv.refIdx[0] < 16)
+        // refIdx is uint8_t in this fork, so guard on predFlag instead of refIdx >= 0
+        if (mv.predFlag[0] == 1 && mv.refIdx[0] < MAX_NUM_REF_PICS)
           refPOC[0] = shrd->RefPicList_POC[0][mv.refIdx[0]];
-        if (mv.predFlag[1] == 1 && mv.refIdx[1] < 16)
+        if (mv.predFlag[1] == 1 && mv.refIdx[1] < MAX_NUM_REF_PICS)
           refPOC[1] = shrd->RefPicList_POC[1][mv.refIdx[1]];
       }
 
       if (mv.predFlag[0] != 1) {
-        // No prediction info for this block
         refPOC0[i] = -1;
         x0[i] = 0;
         y0[i] = 0;
@@ -1019,7 +996,6 @@ public:
       }
 
       if (mv.predFlag[1] != 1) {
-        // No prediction info for this block
         refPOC1[i] = -1;
         x1[i] = 0;
         y1[i] = 0;
@@ -1032,15 +1008,13 @@ public:
     }
   }
 
-  // Get intra direction metadata array layout
-  void internals_get_IntraDir_Info_Layer(int *widthInUnits, int *heightInUnits, int *log2UnitSize) const
+  void internals_get_IntraDir_Info_layout(int *widthInUnits, int *heightInUnits, int *log2UnitSize) const
   {
     *widthInUnits = intraPredMode.width_in_units;
     *heightInUnits = intraPredMode.height_in_units;
     *log2UnitSize = intraPredMode.log2unitSize;
   }
 
-  // Get the luma and chroma intra dir array
   void internals_get_intraDir_info(uint8_t *intraDir, uint8_t *intraDirChroma) const
   {
     for (int i = 0; i < intraPredMode.size(); i++)
@@ -1050,7 +1024,6 @@ public:
     }
   }
 
-  // Get intra direction metadata array layout
   void internals_get_TUInfo_Info_layout(int *widthInUnits, int *heightInUnits, int *log2UnitSize) const
   {
     *widthInUnits = tu_info.width_in_units;
@@ -1058,13 +1031,17 @@ public:
     *log2UnitSize = tu_info.log2unitSize;
   }
 
-  // Get the luma and chroma intra dir array
   void internals_get_TUInfo_info(uint8_t *tuInfo) const
   {
     for (int i = 0; i < tu_info.size(); i++)
     {
       tuInfo[i] = tu_info[i];
     }
+  }
+
+  void internals_set_prediction_CU_signal_to_zero(int x, int y, int w)
+  {
+    internals_set_CU_signal_to_zero(x, y, w, 0);
   }
 
   void internals_set_residual_CU_signal_to_zero(int x, int y, int w)
@@ -1078,8 +1055,7 @@ public:
   }
 
 private:
-  // Set the residual data for the CU (Luma and Chroma) to the 'middle' value depending on the bit depth (128 for 8 bit)
-  // The parameters are: The x and y pixel position of the CU in the frame. w: the width/height of the CU.
+  // Fill a w x w CU at (x,y) with the bit-depth dependent middle value (128 for 8 bit).
   void internals_set_CU_signal_to_zero(int x, int y, int w, int plane)
   {
     for (int cIdx = 0; cIdx < 3; cIdx++)
@@ -1093,14 +1069,16 @@ private:
       int stride = get_image_stride(cIdx);
       int xT = (cIdx == 0) ? x : x / SubWidthC;
       int yT = (cIdx == 0) ? y : y / SubHeightC;
-      int width = (cIdx == 0) ? w : w / SubHeightC;
+      int width = (cIdx == 0) ? w : w / SubWidthC;
       int height = (cIdx == 0) ? w : w / SubHeightC;
+      int imageWidth = get_width(cIdx);
       int imageHeight = get_height(cIdx);
+      if (imageWidth < xT + width)
+        width = imageWidth - xT;
       if (imageHeight < yT + height)
         height = imageHeight - yT;
       if (bd <= 8)
       {
-        // One byte per value
         uint8_t *pix;
         if (plane == 0)
           pix = get_image_plane_prediction_at_pos_NEW<uint8_t>(cIdx, xT,yT);
@@ -1117,7 +1095,6 @@ private:
       }
       else if (bd <= 16)
       {
-        // Two bytes per value
         uint16_t *pix;
         if (plane == 0)
           pix = get_image_plane_prediction_at_pos_NEW<uint16_t>(cIdx, xT,yT);
@@ -1128,14 +1105,12 @@ private:
         else
           return;
 
-        // There is no memset 16 function so set the middle value manually
         uint16_t middleValue = (1 << (bd-1));
         for (int iy = 0; iy < height; iy++)
           for (int ix = 0; ix < width; ix++)
             pix[ix + iy * stride] = middleValue;
       }
       else
-        // > 16 bit not supported
         assert(false);
     }
   }

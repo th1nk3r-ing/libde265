@@ -79,6 +79,7 @@ set (libde265_headers
 
 set (libde265_public_headers
   de265.h
+  de265_internals.h
   ${CMAKE_CURRENT_BINARY_DIR}/de265-version.h
 )
 

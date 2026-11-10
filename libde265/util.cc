@@ -99,8 +99,11 @@ void logerror(enum LogModule module, const char* string, ...)
   va_list va;
   va_start(va, string);
 
-  if (g_log_cb)
-    g_log_cb(g_log_ctx, 1, string, va);
+  de265_logging_callback cb = g_log_cb;
+  if (cb) {
+    const char* msg = (string[0]=='*') ? string+1 : string;
+    cb(g_log_ctx, 1, msg, va);
+  }
   else {
     int noPrefix = (string[0]=='*');
     if (!noPrefix) fprintf(stdout, "ERR: ");
@@ -122,8 +125,11 @@ void loginfo (enum LogModule module, const char* string, ...)
   va_list va;
   va_start(va, string);
 
-  if (g_log_cb)
-    g_log_cb(g_log_ctx, 2, string, va);
+  de265_logging_callback cb = g_log_cb;
+  if (cb) {
+    const char* msg = (string[0]=='*') ? string+1 : string;
+    cb(g_log_ctx, 2, msg, va);
+  }
   else {
     int noPrefix = (string[0]=='*');
     if (!noPrefix) fprintf(stdout, "INFO: ");
@@ -145,8 +151,11 @@ void logdebug(enum LogModule module, const char* string, ...)
   va_list va;
   va_start(va, string);
 
-  if (g_log_cb)
-    g_log_cb(g_log_ctx, 3, string, va);
+  de265_logging_callback cb = g_log_cb;
+  if (cb) {
+    const char* msg = (string[0]=='*') ? string+1 : string;
+    cb(g_log_ctx, 3, msg, va);
+  }
   else {
     int noPrefix = (string[0]=='*');
     if (!noPrefix) fprintf(stdout, "DEBUG: ");
@@ -182,8 +191,11 @@ void logtrace(enum LogModule module, const char* string, ...)
 
   va_start(va, string);
 
-  if (g_log_cb)
-    g_log_cb(g_log_ctx, 4, string, va);
+  de265_logging_callback cb = g_log_cb;
+  if (cb) {
+    const char* msg = (string[0]=='*') ? string+1 : string;
+    cb(g_log_ctx, 4, msg, va);
+  }
   else {
     int noPrefix = (string[0]=='*');
     if (!noPrefix) { } // fprintf(stdout, "ERR: ");

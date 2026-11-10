@@ -14,7 +14,7 @@ Guidance for AI coding agents working on the libde265 codebase.
 脚本内部执行：
 ```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-cmake --build build -j$(nproc)
+cmake --build build -j
 ```
 
 ### Windows（MSVC）
@@ -40,5 +40,7 @@ cmake --build --preset release
 
 ## 构建产物
 
-- `build/libde265/libde265.dll` / `libde265.so` — 解码器共享库
+- `build/libde265/libde265.dll` / `libde265.so` / `libde265.dylib` — 解码器共享库
+- `build/libde265/libde265-internals.*` — 同名副本（YUView 以该名字加载 internals 版）
+- `build/libde265.*` / `build/libde265-internals.*` — 脚本 stage 到 build 根的同名库
 - `build/dec265/dec265` — 命令行解码工具（可选）

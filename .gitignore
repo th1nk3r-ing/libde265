@@ -6,6 +6,7 @@
 # cmake
 /build
 /_build
+/build-*
 compile_commands.json
 
 # MSVC

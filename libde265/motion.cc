@@ -520,7 +520,6 @@ void generate_inter_prediction_samples(base_context* ctx,
       if (refSps != imageSps) {
         const bool contentSame =
             refSps && imageSps &&
-            refSps->seq_parameter_set_id == imageSps->seq_parameter_set_id &&
             refSps->chroma_format_idc == imageSps->chroma_format_idc &&
             refSps->pic_width_in_luma_samples == imageSps->pic_width_in_luma_samples &&
             refSps->pic_height_in_luma_samples == imageSps->pic_height_in_luma_samples &&

@@ -37,22 +37,21 @@ enum de265_internals_param {
 
 LIBDE265_API void de265_internals_set_parameter_bool(de265_decoder_context*, enum de265_internals_param param, int value);
 
-LIBDE265_API const uint8_t* de265_internals_get_image_plane(const struct de265_image* img, de265_internals_param signal, int channel, int* out_stride);
+/// Only SAVE_* is valid for `signal`; returns nullptr when the plane is not allocated.
+LIBDE265_API const uint8_t* de265_internals_get_image_plane(const struct de265_image* img, enum de265_internals_param signal, int channel, int* out_stride);
 
-/// Get the number of CTBs in the image
 LIBDE265_API void de265_internals_get_CTB_Info_Layout(const struct de265_image *img, int *widthInUnits, int *heightInUnits, int *log2UnitSize);
 
-/* Get the slice index of each CTB in the image. Take cake that the array idxArray is at least
- * as long as there are CTBs (see de265_internals_get_numCTB()).
+/* Get the slice index of each CTB. idxArray must hold widthInUnits*heightInUnits
+ * entries; CTBs that were not decoded (e.g. in header-only mode) report slice 0.
  */
 LIBDE265_API void de265_internals_get_CTB_sliceIdx(const struct de265_image *img, uint16_t *idxArray);
 
-/// Get the number of CBs in the image
 LIBDE265_API void de265_internals_get_CB_Info_Layout(const struct de265_image *img, int *widthInUnits, int *heightInUnits, int *log2UnitSize);
 
 /* Get the coding block info. The values are stored in the following way:
    * This function returns an array of values, sorted in a grid.
-   * You can get the layout of the grid by calling internals_get_CB_Info_Layout.
+   * You can get the layout of the grid by calling de265_internals_get_CB_Info_Layout.
    * The values are then arranged in a raster scan so the conversion from 
    * a unit position (x,y) to an index is: y*widthInUnits+x
 
@@ -66,30 +65,22 @@ LIBDE265_API void de265_internals_get_CB_Info_Layout(const struct de265_image *i
   */
 LIBDE265_API void de265_internals_get_CB_info(const struct de265_image *img, uint16_t *idxArray);
 
-/// Get the pb info array layout
 LIBDE265_API void de265_internals_get_PB_Info_layout(const struct de265_image *img, int *widthInUnits, int *heightInUnits, int *log2UnitSize);
 
-/// Get the prediction block info (motion information) 
-LIBDE265_API void de265_internals_get_PB_info(const struct de265_image *img, int16_t *refPOC0, int16_t *refPOC1, int16_t *x0, int16_t *y0, int16_t *x1, int16_t *y1);
+LIBDE265_API void de265_internals_get_PB_info(const struct de265_image *img, int32_t *refPOC0, int32_t *refPOC1, int16_t *x0, int16_t *y0, int16_t *x1, int16_t *y1);
 
-/// Get intra direction array layout
 LIBDE265_API void de265_internals_get_IntraDir_Info_layout(const struct de265_image *img, int *widthInUnits, int *heightInUnits, int *log2UnitSize);
 
-/// Get intra prediction direction array
 LIBDE265_API void de265_internals_get_intraDir_info(const struct de265_image *img, uint8_t *intraDir, uint8_t *intraDirChroma);
 
-/// Get TU info array layout
 LIBDE265_API void de265_internals_get_TUInfo_Info_layout(const struct de265_image *img, int *widthInUnits, int *heightInUnits, int *log2UnitSize);
 
-/// Get TU info
 LIBDE265_API void de265_internals_get_TUInfo_info(const struct de265_image *img, uint8_t *tuInfo);
 
-/// Get GOP info for a decoded image: POC, slice type, NAL unit type, and the
-/// reference picture lists (POCs) with their active counts. The ref_poc_l0/l1
-/// arrays must have space for at least 16 entries each.
-/// out_all_slices_intra is 1 iff every slice in the image is an I-slice
-/// (slice_type == SLICE_TYPE_I), matching the "all slices intra" semantics
-/// used for keyframe detection; NULL may be passed to ignore it.
+/// out_slice_type: 0 = B, 1 = P, 2 = I; unused ref_poc entries and unknown
+/// scalar outputs are -1. Only the first slice is reported; ref_poc_l0/l1 need
+/// room for 16 entries. out_all_slices_intra is 1 iff every slice is an I-slice
+/// (NULL to ignore). Header-only images are parsed but not reconstructed.
 LIBDE265_API void de265_internals_get_gop_info(const struct de265_image *img,
                                                 int* out_poc,
                                                 int* out_slice_type,
@@ -100,7 +91,6 @@ LIBDE265_API void de265_internals_get_gop_info(const struct de265_image *img,
                                                 int  ref_poc_l1[16],
                                                 int* out_all_slices_intra);
 
-/// Get the DTS (decoding timestamp) that was passed via de265_push_NAL.
 LIBDE265_API int64_t de265_internals_get_image_dts(const struct de265_image *img);
 
 #ifdef __cplusplus

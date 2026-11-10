@@ -412,14 +412,13 @@ void scale_coefficients_internal(thread_context* tctx,
   // can optimize away a lot of code for 8-bit pixels.
   const int bit_depth = ((sizeof(pixel_t)==1) ? 8 : sps.get_bit_depth(cIdx));
 
-  // We will put the residual values here (if the buffer is valid)
   pixel_t* resi = nullptr;
   if (tctx->img->get_image_plane_residual(cIdx) != nullptr)
     resi = tctx->img->get_image_plane_residual_at_pos_NEW<pixel_t>(cIdx, xT,yT);
 
   if (tctx->img->get_image_plane_tr_coeff(cIdx) != nullptr)
   {
-    // Copy the transform coefficients
+    // Store the quantized levels as unsigned values offset by the middle value
     pixel_t *tr_coeff = tctx->img->get_image_plane_tr_coeff_at_pos_NEW<pixel_t>(cIdx, xT,yT);
     int zeroValue = (1 << (bit_depth-1));
 

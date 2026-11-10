@@ -645,11 +645,9 @@ de265_error decoder_context::decode_some(bool* did_work)
       *did_work = true;
 
       if (param_header_only) {
-        // Header-only mode: skip CABAC/motion-comp/transform/reconstruction.
-        // Just mark this slice unit as decoded.
+        // header-only mode: skip the slice body
         sliceunit->state = slice_unit::Decoded;
       } else {
-        //err = decode_slice_unit_sequential(imgunit, sliceunit);
         err = decode_slice_unit_parallel(imgunit, sliceunit);
         if (err) {
           return err;
@@ -1707,9 +1705,8 @@ de265_error decoder_context::process_reference_picture_set(slice_segment_header*
 
   hdr->RemoveReferencesList = removeReferencesList;
 
-  // In header-only mode we never enter decode_slice_unit_*, so the DPB cleanup
-  // that normally happens there (lines 680 / 759) is never called.  Do it here
-  // instead so that reference-frame slots are freed and the DPB does not fill up.
+  // Header-only mode never enters decode_slice_unit_*, so the DPB cleanup done
+  // there has to happen here, otherwise reference slots are never freed.
   if (param_header_only) {
     remove_images_from_dpb(hdr->RemoveReferencesList);
   }
